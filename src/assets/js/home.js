@@ -44,15 +44,25 @@ $searchField.addEventListener("keydown", e => {
 const /** {NodeElement} */ $tabBtns = document.querySelectorAll("[data-tab-btn]");
 const /** {NodeElement} */ $tabPanels = document.querySelectorAll("[data-tab-panel]");
 
-let /** {NodeElement} */[$lastActiveTabPanel] = $tabPanels;
-let /** {NodeElement} */[$lastActiveTabBtn] = $tabBtns;
+let /** {NodeElement} */ $lastActiveTabPanel = $tabPanels[0] || null;
+let /** {NodeElement} */ $lastActiveTabBtn = $tabBtns[0] || null;
 
 addEventOnElements($tabBtns, "click", function () {
-    $lastActiveTabPanel.setAttribute("hidden", "");
-    $lastActiveTabBtn.setAttribute("aria-selected", false);
-    $lastActiveTabBtn.setAttribute("tabindex", -1);
+    if ($lastActiveTabBtn === this) return; // Avoid redundant fetch
 
-    const /** {NodeElement} */ $currentTabPanel = document.querySelector(`#${this.getAttribute("aria-controls")}`);
+    if ($lastActiveTabPanel) $lastActiveTabPanel.setAttribute("hidden", "");
+    if ($lastActiveTabBtn) {
+        $lastActiveTabBtn.setAttribute("aria-selected", false);
+        $lastActiveTabBtn.setAttribute("tabindex", -1);
+    }
+
+    const $currentTabPanel = document.querySelector(`#${this.getAttribute("aria-controls")}`);
+
+    if (!$currentTabPanel) {
+        console.error("Panel not found for:", this.getAttribute("aria-controls"));
+        return;
+    }
+
     $currentTabPanel.removeAttribute("hidden");
     this.setAttribute("aria-selected", true);
     this.setAttribute("tabindex", 0);
@@ -62,6 +72,28 @@ addEventOnElements($tabBtns, "click", function () {
 
     addTabContent(this, $currentTabPanel);
 });
+
+// const /** {NodeElement} */ $tabBtns = document.querySelectorAll("[data-tab-btn]");
+// const /** {NodeElement} */ $tabPanels = document.querySelectorAll("[data-tab-panel]");
+
+// let /** {NodeElement} */[$lastActiveTabPanel] = $tabPanels;
+// let /** {NodeElement} */[$lastActiveTabBtn] = $tabBtns;
+
+// addEventOnElements($tabBtns, "click", function () {
+//     $lastActiveTabPanel.setAttribute("hidden", "");
+//     $lastActiveTabBtn.setAttribute("aria-selected", false);
+//     $lastActiveTabBtn.setAttribute("tabindex", -1);
+
+//     const /** {NodeElement} */ $currentTabPanel = document.querySelector(`#${this.getAttribute("aria-controls")}`);
+//     $currentTabPanel.removeAttribute("hidden");
+//     this.setAttribute("aria-selected", true);
+//     this.setAttribute("tabindex", 0);
+
+//     $lastActiveTabPanel = $currentTabPanel;
+//     $lastActiveTabBtn = this;
+
+//     addTabContent(this, $currentTabPanel);
+// });
 
 /**
  * Navigate tab with arrow keys
@@ -94,23 +126,117 @@ addEventOnElements($tabBtns, "keydown", function (e) {
  */
 
 const addTabContent = ($currentTabBtn, $currentTabPanel) => {
-
-    const /** {NodeElement} */ $gridList = document.createElement("div");
+    const $gridList = document.createElement("div");
     $gridList.classList.add("grid-list");
 
+    // Show skeleton cards while loading
     $currentTabPanel.innerHTML = `
         <div class="grid-list">
             ${$skeletonCard.repeat(12)}
         </div>
     `;
 
-    fetchData([['mealType', $currentTabBtn.textContent.trim().toLowerCase()], ...cardQueries], function (data) {
+    // Fetch data (example: filter by mealType)
+    const mealType = $currentTabBtn.textContent.trim().toLowerCase();
 
+    fetchData(`/recipes/meal-type/${mealType}`, {}, data => {
         console.log(data);
         
+        $currentTabPanel.innerHTML = ""; // clear loading skeletons
 
+        if (data && data.recipes && data.recipes.length > 0) {
+            const recipes = data.recipes
+                .filter(recipe => recipe.mealType.some(type => type.toLowerCase() === mealType))
+                .slice(0, 12);
+
+            if (recipes.length === 0) {
+                $currentTabPanel.innerHTML = "<p>No recipes found for this category.</p>";
+                return;
+            }
+
+            recipes.forEach((recipe, i) => {
+                const {
+                    image,
+                    name: title,
+                    cookTimeMinutes,
+                    id
+                } = recipe;
+
+                const $card = document.createElement("div");
+                $card.classList.add("card");
+                $card.style.animationDelay = `${100 * i}ms`;
+
+                $card.innerHTML = `
+                    <figure class="card-media img-holder">
+                        <img src="${image}" width="200" height="200" loading="lazy"
+                            alt="${title}" class="img-cover">
+                    </figure>
+
+                    <div class="card-body">
+                        <h3 class="title-small">
+                            <a href="./detail.html?id=${id}" class="card-link">${title ?? "Untitled"}</a>
+                        </h3>
+
+                        <div class="meta-wrapper">
+                            <div class="meta-item">
+                                <span class="material-symbols-outlined" aria-hidden="true">schedule</span>
+                                <span class="label-medium">${cookTimeMinutes || "<1"} minutes</span>
+                            </div>
+
+                            <button class="icon-btn has-state removed" aria-label="Add to saved recipes">
+                                <span class="material-symbols-outlined bookmark-add" aria-hidden="true">bookmark_add</span>
+                                <span class="material-symbols-outlined bookmark" aria-hidden="true">bookmark</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                $gridList.appendChild($card);
+            });
+
+            $currentTabPanel.appendChild($gridList);
+
+            // Add "Show more" button like the tutorial
+            $currentTabPanel.innerHTML += `
+                <a href="./recipes.html?mealType=${mealType}" class="btn btn-secondary label-large has-state">
+                    Show more
+                </a>
+            `;
+        } else {
+            $currentTabPanel.innerHTML = "<p>No recipes found.</p>";
+        }
     });
+};
 
-}
+// Example usage
+addTabContent($lastActiveTabBtn, $lastActiveTabPanel);
 
-addTabContent($lastActiveTabBtn, $lastActiveTabPanel)
+
+
+
+
+
+
+
+
+// const addTabContent = ($currentTabBtn, $currentTabPanel) => {
+
+//     const /** {NodeElement} */ $gridList = document.createElement("div");
+//     $gridList.classList.add("grid-list");
+
+//     $currentTabPanel.innerHTML = `
+//         <div class="grid-list">
+//             ${$skeletonCard.repeat(12)}
+//         </div>
+//     `;
+
+//     fetchData([['mealType', $currentTabBtn.textContent.trim().toLowerCase()], ...cardQueries], function (data) {
+
+//         console.log(data);
+        
+
+//     });
+
+// }
+
+// addTabContent($lastActiveTabBtn, $lastActiveTabPanel)
