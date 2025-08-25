@@ -25,12 +25,12 @@ window.addEventOnElements = ($elements, eventType, callback) => {
 
 
 
-export const /** {Array} */ cardQueries = [
-    ["field", "url"],
-    ["field", "label"],
-    ["field", "image"],
-    ["field", "totalTime"]
-];
+// export const /** {Array} */ cardQueries = [
+//     ["field", "url"],
+//     ["field", "label"],
+//     ["field", "image"],
+//     ["field", "totalTime"]
+// ];
 
 /**
  * skeleton
@@ -72,7 +72,7 @@ window.saveRecipe = function (element, recipeId) {
                 element.classList.toggle("removed");
 
                 // Show notification
-                showNotification("Addedd to Recipe Book");
+                showNotification("Addedd to Recipe book");
             })
             .catch(error => console.error("Error fetching recipe:", error));
     } else {
@@ -84,6 +84,21 @@ window.saveRecipe = function (element, recipeId) {
         element.classList.toggle("removed");
 
         // Show notification
-        showNotification("Removed from Recipe Book");
+        showNotification("Removed from Recipe book");
     }
 };
+
+
+
+const /** {NodeElement} */ $snackbarContainer = document.createElement("div");
+$snackbarContainer.classList.add("snackbar-container");
+document.body.appendChild($snackbarContainer);
+
+function showNotification(message) {
+    const /** {NodeElement} */ $snackbar = document.createElement("div");
+    $snackbar.classList.add("snackbar");
+    $snackbar.innerHTML = `<p class="body-medium">${message}</p>`;
+    $snackbarContainer.appendChild($snackbar);
+    $snackbar.addEventListener("animationend", e => $snackbarContainer.removeChild($snackbar));
+
+}

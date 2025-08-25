@@ -12,7 +12,7 @@
  */
 
 import { fetchData } from "./api.js";
-import { $skeletonCard, cardQueries } from "./global.js";
+import { $skeletonCard } from "./global.js";
 import { getTime } from "./module.js";
 
 
@@ -216,31 +216,103 @@ const addTabContent = ($currentTabBtn, $currentTabPanel) => {
 addTabContent($lastActiveTabBtn, $lastActiveTabPanel);
 
     
+/** 
+ * Fetch data for slider card
+ */
 
+let cuisineType = ["Asian", "Italian"];
+const sliderSections = document.querySelectorAll("[data-slider-section]");
 
+for (const [index, sliderSection] of sliderSections.entries()) {
+  sliderSection.innerHTML = `
+    <div class="container">
+      <h2 class="section-title headline-small" id="slider-label-${index}">
+        Latest ${cuisineType[index]} Recipes
+      </h2>
+      <div class="slider">
+        <ul class="slider-wrapper" data-slider-wrapper>
+          ${`<li class="slider-item">${$skeletonCard}</li>`.repeat(10)}
+        </ul>
+      </div>
+    </div>
+  `;
 
+  const sliderWrapper = sliderSection.querySelector("[data-slider-wrapper]");
 
+  fetch(`https://dummyjson.com/recipes?limit=200`)
+    .then(res => res.json())
+    .then(data => {
+      sliderWrapper.innerHTML = "";
 
+      // Filter recipes where tags include the current cuisineType
+      const filteredRecipes = data.recipes.filter(recipe =>
+        recipe.tags.some(tag => tag.toLowerCase() === cuisineType[index].toLowerCase())
+      );
 
+      // Duplicate array if less than 10 to fill slider
+      const recipesToShow = [];
+      while (recipesToShow.length < 10 && filteredRecipes.length > 0) {
+        recipesToShow.push(...filteredRecipes);
+      }
+      const recipes = recipesToShow.slice(0, 10);
 
-// const addTabContent = ($currentTabBtn, $currentTabPanel) => {
+      recipes.forEach(item => {
+        const { id: recipeId, image, name: title, cookTimeMinutes: cookingTime } = item;
+        const isSaved = window.localStorage.getItem(`cookio-recipe${recipeId}`);
 
-//     const /** {NodeElement} */ $gridList = document.createElement("div");
-//     $gridList.classList.add("grid-list");
+        const sliderItem = document.createElement("li");
+        sliderItem.classList.add("slider-item");
 
-//     $currentTabPanel.innerHTML = `
-//         <div class="grid-list">
-//             ${$skeletonCard.repeat(12)}
-//         </div>
-//     `;
+        sliderItem.innerHTML = `
+          <div class="card">
+            <figure class="card-media img-holder">
+              <a href="./detail.html?recipe=${recipeId}">
+                <img src="${image}" 
+                     alt="${title}" 
+                     class="img-cover"
+                     loading="lazy"
+                     width="195"
+                     height="195">
+              </a>
+            </figure>
 
-//     fetchData([['mealType', $currentTabBtn.textContent.trim().toLowerCase()], ...cardQueries], function (data) {
+            <div class="card-body">
+              <h3 class="title-small">
+                <a href="./detail.html?recipe=${recipeId}" class="card-link">
+                  ${title ?? "Untitled"}
+                </a>
+              </h3>
 
-//         console.log(data);
-        
+              <div class="meta-wrapper">
+                <div class="meta-item">
+                  <span class="material-symbols-outlined" aria-hidden="true">schedule</span>
+                  <span class="label-medium">${cookingTime || "<1"} min</span>
+                </div>
 
-//     });
+                <button class="icon-btn has-state ${isSaved ? "saved" : "removed"}" 
+                        aria-label="Add to saved recipes" 
+                        onclick="saveRecipe(this, '${recipeId}')">
+                  <span class="material-symbols-outlined bookmark-add" aria-hidden="true">bookmark_add</span>
+                  <span class="material-symbols-outlined bookmark" aria-hidden="true">bookmark</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
 
-// }
+        sliderWrapper.appendChild(sliderItem);
+      });
 
-// addTabContent($lastActiveTabBtn, $lastActiveTabPanel)
+      // Show more card
+      sliderWrapper.innerHTML += `
+        <li class="slider-item" data-slider-item>
+          <a href="./recipes.html?search=${cuisineType[index].toLowerCase()}" 
+             class="load-more-card has-state">
+            <span class="label-large">Show More</span>
+            <span class="material-symbols-outlined bookmark-add" aria-hidden="true">navigate_next</span>
+          </a>
+        </li>
+      `;
+    })
+    .catch(err => console.error("Error fetching slider data:", err));
+}
