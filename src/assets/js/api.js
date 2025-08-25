@@ -12,8 +12,9 @@
  * @param {Function} successCallback Callback to handle fetched data
  */
 
-export const fetchData = async function (endpoint, queryParams, successCallback) {
+export const fetchData = async function (endpoint, queryParams = {}, successCallback) {
     let url = `https://dummyjson.com${endpoint}`;
+
     if (queryParams && Object.keys(queryParams).length > 0) {
         const params = new URLSearchParams(queryParams);
         url += `?${params.toString()}`;
@@ -30,7 +31,8 @@ export const fetchData = async function (endpoint, queryParams, successCallback)
     } catch (error) {
         console.error("Fetch failed:", error);
     }
-}
+};
+
 
 
 

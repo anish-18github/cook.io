@@ -7,6 +7,8 @@
 "use strict";
 
 
+
+
 /**
  * Add event on multiple elements
  * 
@@ -47,3 +49,41 @@ export const /** {String} */ $skeletonCard = `
 
     </div>
 `
+
+// SAVE RECIPE
+
+const /** {String} */ ROOT = "https://dummyjson.com/recipes";
+
+window.saveRecipe = function (element, recipeId) {
+    const /** {String} */ storageKey = `cookio-recipe${recipeId}`;
+    const /** {String} */ isSaved = window.localStorage.getItem(storageKey);
+
+    if (!isSaved) {
+
+        fetch(`${ROOT}/${recipeId}`)
+            .then(response => response.json())
+            .then(data => {
+
+                // Save to localstorage
+                window.localStorage.setItem(storageKey, JSON.stringify(data));
+
+                // Update UI
+                element.classList.toggle("saved");
+                element.classList.toggle("removed");
+
+                // Show notification
+                showNotification("Addedd to Recipe Book");
+            })
+            .catch(error => console.error("Error fetching recipe:", error));
+    } else {
+        // Remove from localStorage
+        window.localStorage.removeItem(storageKey);
+
+        // Update UI
+        element.classList.toggle("saved");
+        element.classList.toggle("removed");
+
+        // Show notification
+        showNotification("Removed from Recipe Book");
+    }
+};

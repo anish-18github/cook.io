@@ -13,6 +13,7 @@
 
 import { fetchData } from "./api.js";
 import { $skeletonCard, cardQueries } from "./global.js";
+import { getTime } from "./module.js";
 
 
 
@@ -145,9 +146,9 @@ const addTabContent = ($currentTabBtn, $currentTabPanel) => {
         $currentTabPanel.innerHTML = ""; // clear loading skeletons
 
         if (data && data.recipes && data.recipes.length > 0) {
-            const recipes = data.recipes
-                .filter(recipe => recipe.mealType.some(type => type.toLowerCase() === mealType))
-                .slice(0, 12);
+            const recipes = data.recipes.slice(0, 12);
+                // .filter(recipe => recipe.mealType.some(type => type.toLowerCase() === mealType))
+                
 
             if (recipes.length === 0) {
                 $currentTabPanel.innerHTML = "<p>No recipes found for this category.</p>";
@@ -162,7 +163,10 @@ const addTabContent = ($currentTabBtn, $currentTabPanel) => {
                     id
                 } = recipe;
 
-                const $card = document.createElement("div");
+                const timeObj = getTime(cookTimeMinutes || 1);
+                const /** {undefined || String} */ isSaved = window.localStorage.getItem(`cookio-recipe${id}`)
+
+                const /** {NodeElement} */ $card = document.createElement("div");
                 $card.classList.add("card");
                 $card.style.animationDelay = `${100 * i}ms`;
 
@@ -180,10 +184,10 @@ const addTabContent = ($currentTabBtn, $currentTabPanel) => {
                         <div class="meta-wrapper">
                             <div class="meta-item">
                                 <span class="material-symbols-outlined" aria-hidden="true">schedule</span>
-                                <span class="label-medium">${cookTimeMinutes || "<1"} minutes</span>
+                                <span class="label-medium">${timeObj.time || "<1"} ${timeObj.timeUnit}</span>
                             </div>
 
-                            <button class="icon-btn has-state removed" aria-label="Add to saved recipes">
+                            <button class="icon-btn has-state ${isSaved ? "saved" : "removed"}" aria-label="Add to saved recipes" onclick="saveRecipe(this, '${id}')">
                                 <span class="material-symbols-outlined bookmark-add" aria-hidden="true">bookmark_add</span>
                                 <span class="material-symbols-outlined bookmark" aria-hidden="true">bookmark</span>
                             </button>
@@ -211,7 +215,7 @@ const addTabContent = ($currentTabBtn, $currentTabPanel) => {
 // Example usage
 addTabContent($lastActiveTabBtn, $lastActiveTabPanel);
 
-
+    
 
 
 
