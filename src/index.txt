@@ -269,7 +269,7 @@ aria-label = 10 to 20 ingredients
 value = 20-30
 aria-label = 20 to 30 ingredients
 
-&gt; 30 ingredients
+&gt; 30 ingredients 
 value = 30+
 aria-label = 30 or more ingredients
 
