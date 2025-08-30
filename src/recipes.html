@@ -153,9 +153,11 @@
                 <div class="title-wrapper">
                     <span class="material-symbols-outlined" aria-hidden="true">filter_list</span>
                     <p class="title-medium">Filters</p>
-                    <button class="close-btn has-state" aria-label="Close filter bar" data-filter-toggler>
+
+                    <button class="icon-btn close-btn has-state" aria-label="Close filter bar" data-filter-toggler>
                         <span class="material-symbols-outlined" aria-hidden="true">close</span>
                     </button>
+
                 </div>
 
                 <div class="filter-content">
@@ -177,6 +179,7 @@
                         <button class="accordion-btn has-state" aria-controls="cook-time" aria-expanded="false"
                             data-accordion-btn>
                             <span class="material-symbols-outlined" aria-hidden="true">timer</span>
+
                             <p class="label-large">Cooking Time</p>
                             <span class="material-symbols-outlined trailing-icon" aria-hidden="true">expand_more</span>
                         </button>
@@ -397,6 +400,38 @@
 
             </div>
 
+            <div class="overlay" data-overlay data-filter-toggler></div>
+
+            <div class="recipe-container container">
+
+                <div class="title-wrapper">
+
+                    <div class="headline-small">All Recipes</div>
+
+                    <button class="btn btn-secondary btn-filter has-icon has-state" aria-label="Open filter bar"
+                        data-filter-toggler data-filter-btn>
+
+                        <span class="material-symbols-outlined" aria-hidden="true">filter_list</span>
+
+                        <div class="wrapper">
+                            <span class="label-large">Filters</span>
+
+                            <div class="badge label-small" data-filter-count>9</div>
+                        </div>
+
+                    </button>
+                </div>
+
+                <div class="grid-list" data-grid-list></div>
+
+                <div class="load-more grid-list" data-load-more>
+
+                    <p class="body-medium info-text">Lorem ipsum dolor sit amet consectetur adipisicing elit. Alias,
+                        quasi. Iusto ex
+                        dolore distinctio, saepe hic in. Non,</p>
+                </div>
+
+            </div>
 
         </article>
     </main>
