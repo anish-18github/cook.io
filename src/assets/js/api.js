@@ -28,7 +28,7 @@ export const fetchData = async function (endpoint, queryParams = {}, successCall
         } else {
             console.error(`Error ${response.status}:`, await response.text());
         }
-    } catch (error) {
+    } catch (error) {       
         console.error("Fetch failed:", error);
     }
 };
