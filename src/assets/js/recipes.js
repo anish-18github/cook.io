@@ -1,7 +1,7 @@
 /**
  * @license MIT
  * @copyright 2025 codegg
- * @author codegg <codeegg401@gmail.com>
+ * @author codegg401@gmail.com
  */
 
 "use strict";
@@ -11,99 +11,120 @@ import { $skeletonCard } from "./global.js";
 import { getTime } from "./module.js";
 
 /* Accordion */
-const $accordions = document.querySelectorAll("[data-accordion]");
-const initAccordion = function ($element) {
-    const $button = $element.querySelector("[data-accordion-btn]");
+const accordions = document.querySelectorAll("[data-accordion]");
+for (const accordion of accordions) {
+    const button = accordion.querySelector("[data-accordion-btn]");
     let isExpanded = false;
-    $button.addEventListener("click", function () {
+    button.addEventListener("click", function () {
         isExpanded = !isExpanded;
         this.setAttribute("aria-expanded", isExpanded);
     });
-};
-for (const $accordion of $accordions) initAccordion($accordion);
+}
 
 /* Filter bar toggler for mobile screen */
-const $filterBar = document.querySelector("[data-filter-bar]");
-const $filterTogglers = document.querySelectorAll("[data-filter-toggler]");
-const $overlay = document.querySelector("[data-overlay]");
-window.addEventOnElements($filterTogglers, "click", function () {
-    $filterBar.classList.toggle("active");
-    $overlay.classList.toggle("active");
-    const bodyOverFlow = document.body.style.overflow;
-    document.body.style.overflow = bodyOverFlow === "hidden" ? "visible" : "hidden";
+const filterBar = document.querySelector("[data-filter-bar]");
+const filterTogglers = document.querySelectorAll("[data-filter-toggler]");
+const overlay = document.querySelector("[data-overlay]");
+window.addEventOnElements(filterTogglers, "click", function () {
+    filterBar.classList.toggle("active");
+    overlay.classList.toggle("active");
+    const bodyOverflow = document.body.style.overflow;
+    document.body.style.overflow = bodyOverflow === "hidden" ? "visible" : "hidden";
 });
 
 /* Filter submit and clear */
-const $filterSubmit = document.querySelector("[data-filter-submit]");
-const $filterClear = document.querySelector("[data-filter-clear]");
-const $filterSearch = $filterBar.querySelector("input[type='search']");
+const filterSubmit = document.querySelector("[data-filter-submit]");
+const filterClear = document.querySelector("[data-filter-clear]");
+const filterSearch = filterBar.querySelector("input[type='search']");
 
-$filterSubmit.addEventListener("click", function () {
-    const $filterCheckboxes = $filterBar.querySelectorAll("input:checked");
+filterSubmit.addEventListener("click", function () {
+    const filterCheckboxes = filterBar.querySelectorAll("input:checked");
     const queries = [];
-    if ($filterSearch.value) queries.push(["q", $filterSearch.value]);
-    if ($filterCheckboxes.length) {
-        for (const $checkbox of $filterCheckboxes) {
-            const key = $checkbox.parentElement.parentElement.dataset.filter;
-            queries.push([key, $checkbox.value]);
+    const searchValue = filterSearch.value.trim();
+    if (searchValue) queries.push(["q", searchValue]);
+    if (filterCheckboxes.length) {
+        for (const checkbox of filterCheckboxes) {
+            const key = checkbox.parentElement.parentElement.dataset.filter;
+            queries.push([key, checkbox.value]);
         }
     }
-    window.location = queries.length ? `?${queries.join("&").replace(/,/g, "=")}` : "/recipes.html";
+    // Only redirect if there is at least one filter or search value
+    if (queries.length) {
+        window.location = `?${queries.join("&").replace(/,/g, "=")}`;
+    }
+    // Otherwise, do nothing (or optionally reload to show all recipes)
 });
 
-$filterSearch.addEventListener("keydown", e => {
-    if (e.key === "Enter") $filterSubmit.click();
+filterSearch.addEventListener("keydown", e => {
+    if (e.key === "Enter") filterSubmit.click();
 });
 
-$filterClear.addEventListener("click", function () {
-    const $filterCheckboxes = $filterBar.querySelectorAll("input:checked");
-    $filterCheckboxes?.forEach(elem => elem.checked = false);
-    $filterSearch.value &&= "";
+filterClear.addEventListener("click", function () {
+    const filterCheckboxes = filterBar.querySelectorAll("input:checked");
+    filterCheckboxes?.forEach(elem => elem.checked = false);
+    filterSearch.value &&= "";
 });
 
 const queryStr = window.location.search.slice(1);
-const queriesArr = queryStr && queryStr.split("&").map(i => i.split("="));
-const $filterCount = document.querySelector("[data-filter-count]");
-if (queriesArr.length) {
-    $filterCount.style.display = "block";
-    $filterCount.innerHTML = queriesArr.length;
+const queries = queryStr ? queryStr.split("&").map(i => i.split("=")) : [];
+const filterCount = document.querySelector("[data-filter-count]");
+if (queries.length) {
+    filterCount.style.display = "block";
+    filterCount.innerHTML = queries.length;
 } else {
-    $filterCount.style.display = "none";
+    filterCount.style.display = "none";
 }
 queryStr && queryStr.split("&").map(i => {
     if (i.split("=")[0] === "q") {
-        $filterBar.querySelector("input[type='search']").value = i.split("=")[1].replace(/%20/g, " ");
+        filterBar.querySelector("input[type='search']").value = i.split("=")[1].replace(/%20/g, " ");
     } else {
-        $filterBar.querySelector(`[value="${i.split("=")[1].replace(/%20/g, " ")}"]`).checked = true;
+        filterBar.querySelector(`[value="${i.split("=")[1].replace(/%20/g, " ")}"]`).checked = true;
     }
 });
 
-const $filterBtn = document.querySelector("[data-filter-btn]");
-window.addEventListener("scroll", e => {
-    $filterBtn.classList[window.scrollY >= 120 ? "add" : "remove"]("active");
+const filterBtn = document.querySelector("[data-filter-btn]");
+window.addEventListener("scroll", () => {
+    filterBtn.classList[window.scrollY >= 120 ? "add" : "remove"]("active");
 });
 
 /* Request recipes and render */
-const $gridList = document.querySelector("[data-grid-list]");
-const $loadMore = document.querySelector("[data-load-more]");
-$gridList.innerHTML = $skeletonCard.repeat(20);
+const gridList = document.querySelector("[data-grid-list]");
+const loadMore = document.querySelector("[data-load-more]");
+gridList.innerHTML = $skeletonCard.repeat(20);
 
 let nextPageSkip = 0;
 let requestedBefore = true;
 
+function filterRecipesClientSide(recipes, queries) {
+    if (!queries || !queries.length) return recipes;
+    return recipes.filter(recipe => {
+        return queries.every(([key, value]) => {
+            if (key === "q") {
+                const searchVal = value.toLowerCase();
+                return recipe.name.toLowerCase().includes(searchVal) ||
+                    (recipe.ingredients && recipe.ingredients.join(" ").toLowerCase().includes(searchVal));
+            }
+            if (Array.isArray(recipe[key])) {
+                // Case-insensitive match for arrays
+                return recipe[key].some(v => v.toLowerCase() === value.toLowerCase());
+            }
+            if (typeof recipe[key] === "string") {
+                // Case-insensitive match for strings
+                return recipe[key].toLowerCase() === value.toLowerCase();
+            }
+            return recipe[key] === value;
+        });
+    });
+}
+
 const renderRecipes = data => {
     data.recipes.forEach((recipe, index) => {
-        const {
-            image,
-            name: title,
-            cookTimeMinutes: cookingTime,
-            id
-        } = recipe;
+        const { image, name: title, cookTimeMinutes: cookingTime, id } = recipe;
         const isSaved = window.localStorage.getItem(`cookio-recipe${id}`);
-        const $card = document.createElement("div");
-        $card.classList.add("card");
-        $card.style.animationDelay = `${100 * index}ms`;
-        $card.innerHTML = `
+        const card = document.createElement("div");
+        card.classList.add("card");
+        card.style.animationDelay = `${100 * index}ms`;
+        card.innerHTML = `
             <figure class="card-media img-holder">
                 <a href="./detail.html?recipe=${id}">
                     <img src="${image}" alt="${title}" class="img-cover" loading="lazy" width="195" height="195">
@@ -125,53 +146,53 @@ const renderRecipes = data => {
                 </div>
             </div>
         `;
-        $gridList.appendChild($card);
+        gridList.appendChild(card);
     });
 };
 
-function buildQueryParams(queriesArr, skip = 0, limit = 20) {
-    const params = { skip, limit };
-    if (queriesArr && queriesArr.length) {
-        queriesArr.forEach(([key, value]) => {
-            if (key === "q") params.search = value;
-            else params[key] = value;
-        });
-    }
-    return params;
-}
-
 function fetchAndRenderRecipes(skip = 0) {
-    $gridList.innerHTML = $skeletonCard.repeat(20);
-    const params = buildQueryParams(queriesArr, skip, 20);
-    fetchData("/recipes", params, data => {
-        $gridList.innerHTML = "";
+    gridList.innerHTML = $skeletonCard.repeat(20);
+    // Always fetch a large batch for client-side filtering
+    fetchData("/recipes", { limit: 1000 }, data => {
+        gridList.innerHTML = "";
         requestedBefore = false;
-        if (data.recipes.length) {
-            renderRecipes(data);
-            nextPageSkip = skip + data.recipes.length;
+        let recipes = data.recipes;
+        recipes = filterRecipesClientSide(recipes, queries);
+        if (recipes.length) {
+            renderRecipes({ recipes });
+            nextPageSkip = skip + recipes.length;
         } else {
-            $loadMore.innerHTML = `<p class="body-medium info-text">No Recipe Found !!!</p>`;
+            loadMore.innerHTML = `<p class="body-medium info-text">No Recipe Found !!!</p>`;
         }
     });
 }
 
 fetchAndRenderRecipes();
 
+const CONTAINER_MAX_WIDTH = 1200;
+const CONTAINER_MAX_CARD = 6;
+
 window.addEventListener("scroll", async () => {
     if (
-        $loadMore.getBoundingClientRect().top < window.innerHeight &&
+        loadMore.getBoundingClientRect().top < window.innerHeight &&
         !requestedBefore
     ) {
-        $loadMore.innerHTML = $skeletonCard.repeat(6);
+        const skeletonCount = Math.round(
+            (loadMore.clientWidth / CONTAINER_MAX_WIDTH) * CONTAINER_MAX_CARD
+        );
+        loadMore.innerHTML = $skeletonCard.repeat(skeletonCount);
+
         requestedBefore = true;
-        fetchData("/recipes", buildQueryParams(queriesArr, nextPageSkip, 20), data => {
-            if (data.recipes.length) {
-                renderRecipes(data);
-                nextPageSkip += data.recipes.length;
-                $loadMore.innerHTML = "";
+        fetchData("/recipes", { limit: 100, skip: nextPageSkip }, data => {
+            let recipes = data.recipes;
+            recipes = filterRecipesClientSide(recipes, queries);
+            if (recipes.length) {
+                renderRecipes({ recipes });
+                nextPageSkip += recipes.length;
+                loadMore.innerHTML = "";
                 requestedBefore = false;
             } else {
-                $loadMore.innerHTML = `<p class="body-medium info-text">No more recipes</p>`;
+                loadMore.innerHTML = `<p class="body-medium info-text">No more recipes</p>`;
             }
         });
     }

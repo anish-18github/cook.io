@@ -26,7 +26,7 @@ const /** {NodeElement} */ $searchField = document.querySelector("[data-search-f
 const /** {NodeElement} */ $searchBtn = document.querySelector("[data-search-btn]");
 
 $searchBtn.addEventListener("click", function () {
-    if ($searchField.value) window.location = `./recipes.html?q=${$searchField.value}`;
+  if ($searchField.value) window.location = `./recipes.html?q=${$searchField.value}`;
 })
 
 /**
@@ -34,7 +34,7 @@ $searchBtn.addEventListener("click", function () {
  */
 
 $searchField.addEventListener("keydown", e => {
-    if (e.key === "Enter") $searchBtn.click();
+  if (e.key === "Enter") $searchBtn.click();
 })
 
 
@@ -49,29 +49,29 @@ let /** {NodeElement} */ $lastActiveTabPanel = $tabPanels[0] || null;
 let /** {NodeElement} */ $lastActiveTabBtn = $tabBtns[0] || null;
 
 addEventOnElements($tabBtns, "click", function () {
-    if ($lastActiveTabBtn === this) return; // Avoid redundant fetch
+  if ($lastActiveTabBtn === this) return; // Avoid redundant fetch
 
-    if ($lastActiveTabPanel) $lastActiveTabPanel.setAttribute("hidden", "");
-    if ($lastActiveTabBtn) {
-        $lastActiveTabBtn.setAttribute("aria-selected", false);
-        $lastActiveTabBtn.setAttribute("tabindex", -1);
-    }
+  if ($lastActiveTabPanel) $lastActiveTabPanel.setAttribute("hidden", "");
+  if ($lastActiveTabBtn) {
+    $lastActiveTabBtn.setAttribute("aria-selected", false);
+    $lastActiveTabBtn.setAttribute("tabindex", -1);
+  }
 
-    const $currentTabPanel = document.querySelector(`#${this.getAttribute("aria-controls")}`);
+  const $currentTabPanel = document.querySelector(`#${this.getAttribute("aria-controls")}`);
 
-    if (!$currentTabPanel) {
-        console.error("Panel not found for:", this.getAttribute("aria-controls"));
-        return;
-    }
+  if (!$currentTabPanel) {
+    console.error("Panel not found for:", this.getAttribute("aria-controls"));
+    return;
+  }
 
-    $currentTabPanel.removeAttribute("hidden");
-    this.setAttribute("aria-selected", true);
-    this.setAttribute("tabindex", 0);
+  $currentTabPanel.removeAttribute("hidden");
+  this.setAttribute("aria-selected", true);
+  this.setAttribute("tabindex", 0);
 
-    $lastActiveTabPanel = $currentTabPanel;
-    $lastActiveTabBtn = this;
+  $lastActiveTabPanel = $currentTabPanel;
+  $lastActiveTabBtn = this;
 
-    addTabContent(this, $currentTabPanel);
+  addTabContent(this, $currentTabPanel);
 });
 
 // const /** {NodeElement} */ $tabBtns = document.querySelectorAll("[data-tab-btn]");
@@ -102,21 +102,21 @@ addEventOnElements($tabBtns, "click", function () {
 
 addEventOnElements($tabBtns, "keydown", function (e) {
 
-    const /** {NodeElement} */ $nextElement = this.nextElementSibling;
-    const /** {NodeElement} */ $previousElement = this.previousElementSibling;
+  const /** {NodeElement} */ $nextElement = this.nextElementSibling;
+  const /** {NodeElement} */ $previousElement = this.previousElementSibling;
 
-    if (e.key === "ArrowRight" && $nextElement) {
-        this.setAttribute("tabindex", -1)
-        $nextElement.setAttribute("tabindex", 0);
-        $nextElement.focus();
-    } else if (e.key === "ArrowLeft" && $previousElement) {
-        this.setAttribute("tabindex", -1);
-        $previousElement.setAttribute("tabindex", 0);
-        $previousElement.focus();
-    } else if (e.key === "Tab") {
-        this.setAttribute("tabindex", -1);
-        $lastActiveTabBtn.setAttribute("tabindex", 0)
-    }
+  if (e.key === "ArrowRight" && $nextElement) {
+    this.setAttribute("tabindex", -1)
+    $nextElement.setAttribute("tabindex", 0);
+    $nextElement.focus();
+  } else if (e.key === "ArrowLeft" && $previousElement) {
+    this.setAttribute("tabindex", -1);
+    $previousElement.setAttribute("tabindex", 0);
+    $previousElement.focus();
+  } else if (e.key === "Tab") {
+    this.setAttribute("tabindex", -1);
+    $lastActiveTabBtn.setAttribute("tabindex", 0)
+  }
 });
 
 
@@ -127,50 +127,50 @@ addEventOnElements($tabBtns, "keydown", function (e) {
  */
 
 const addTabContent = ($currentTabBtn, $currentTabPanel) => {
-    const $gridList = document.createElement("div");
-    $gridList.classList.add("grid-list");
+  const $gridList = document.createElement("div");
+  $gridList.classList.add("grid-list");
 
-    // Show skeleton cards while loading
-    $currentTabPanel.innerHTML = `
+  // Show skeleton cards while loading
+  $currentTabPanel.innerHTML = `
         <div class="grid-list">
             ${$skeletonCard.repeat(12)}
         </div>
     `;
 
-    // Fetch data (example: filter by mealType)
-    const mealType = $currentTabBtn.textContent.trim().toLowerCase();
+  // Fetch data (example: filter by mealType)
+  const mealType = $currentTabBtn.textContent.trim().toLowerCase();
 
-    fetchData(`/recipes/meal-type/${mealType}`, {}, data => {
-        console.log(data);
-        
-        $currentTabPanel.innerHTML = ""; // clear loading skeletons
+  fetchData(`/recipes/meal-type/${mealType}`, {}, data => {
+    console.log(data);
 
-        if (data && data.recipes && data.recipes.length > 0) {
-            const recipes = data.recipes.slice(0, 12);
-                // .filter(recipe => recipe.mealType.some(type => type.toLowerCase() === mealType))
-                
+    $currentTabPanel.innerHTML = ""; // clear loading skeletons
 
-            if (recipes.length === 0) {
-                $currentTabPanel.innerHTML = "<p>No recipes found for this category.</p>";
-                return;
-            }
+    if (data && data.recipes && data.recipes.length > 0) {
+      const recipes = data.recipes.slice(0, 12);
+      // .filter(recipe => recipe.mealType.some(type => type.toLowerCase() === mealType))
 
-            recipes.forEach((recipe, i) => {
-                const {
-                    image,
-                    name: title,
-                    cookTimeMinutes,
-                    id
-                } = recipe;
 
-                const timeObj = getTime(cookTimeMinutes || 1);
-                const /** {undefined || String} */ isSaved = window.localStorage.getItem(`cookio-recipe${id}`)
+      if (recipes.length === 0) {
+        $currentTabPanel.innerHTML = "<p>No recipes found for this category.</p>";
+        return;
+      }
 
-                const /** {NodeElement} */ $card = document.createElement("div");
-                $card.classList.add("card");
-                $card.style.animationDelay = `${100 * i}ms`;
+      recipes.forEach((recipe, i) => {
+        const {
+          image,
+          name: title,
+          cookTimeMinutes,
+          id
+        } = recipe;
 
-                $card.innerHTML = `
+        const timeObj = getTime(cookTimeMinutes || 1);
+        const /** {undefined || String} */ isSaved = window.localStorage.getItem(`cookio-recipe${id}`)
+
+        const /** {NodeElement} */ $card = document.createElement("div");
+        $card.classList.add("card");
+        $card.style.animationDelay = `${100 * i}ms`;
+
+        $card.innerHTML = `
                     <figure class="card-media img-holder">
                         <img src="${image}" width="200" height="200" loading="lazy"
                             alt="${title}" class="img-cover">
@@ -195,27 +195,27 @@ const addTabContent = ($currentTabBtn, $currentTabPanel) => {
                     </div>
                 `;
 
-                $gridList.appendChild($card);
-            });
+        $gridList.appendChild($card);
+      });
 
-            $currentTabPanel.appendChild($gridList);
+      $currentTabPanel.appendChild($gridList);
 
-            // Add "Show more" button like the tutorial
-            $currentTabPanel.innerHTML += `
+      // Add "Show more" button like the tutorial
+      $currentTabPanel.innerHTML += `
                 <a href="./recipes.html?mealType=${mealType}" class="btn btn-secondary label-large has-state">
                     Show more
                 </a>
             `;
-        } else {
-            $currentTabPanel.innerHTML = "<p>No recipes found.</p>";
-        }
-    });
+    } else {
+      $currentTabPanel.innerHTML = "<p>No recipes found.</p>";
+    }
+  });
 };
 
 // Example usage
 addTabContent($lastActiveTabBtn, $lastActiveTabPanel);
 
-    
+
 /** 
  * Fetch data for slider card
  */
